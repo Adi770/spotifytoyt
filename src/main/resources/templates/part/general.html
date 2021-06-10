@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:fragment="header">
+    <meta charset="UTF-8">
+    <title>SpotifyToYoutube</title>
+    <link th:rel="stylesheet" th:href="@{/webjars/bootstrap/5.0.0/css/bootstrap.min.css}">
+    <script th:src="@{/webjars/bootstrap/5.0.0/js/bootstrap.bundle.min.js}"></script>
+</head>
+<body>
+
+<nav th:fragment="navbar" class="navbar navbar-light bg-light">
+    <div class="container-fluid">
+        <a href="/" class="navbar-brand">SpotifyToYouTube</a>
+        <form class="d-flex flex-column">
+            <a class="btn btn-outline-success" href="/oauth2/authorization/google" th:if="${youtube == null }">YouTube</a>
+            <p th:unless="${youtube == null}">YouTube account <span th:text="${youtube}"></span></p>
+            <a class="btn btn-outline-success" href="/oauth2/authorization/spotify" th:if="${spotify == null }">Spotify</a>
+            <p th:unless="${spotify == null}">Spotify account <span th:text="${spotify}"></span></p>
+        </form>
+    </div>
+</nav>
+
+
+<footer th:fragment="footer">
+    <div class="footer mt-auto py-3 bg-light" style="position: fixed; bottom: 0; width: 100%">
+        <div class="container text-center">
+            <span>Adrian Lepa</span>
+        </div>
+    </div>
+</footer>
+
+</body>
+</html>
+
+

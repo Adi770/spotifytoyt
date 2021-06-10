@@ -1,0 +1,23 @@
+{
+  "properties": [
+    {
+      "name": "spotify.search",
+      "type": "java.lang.String",
+      "description": "Description for spotify.search."
+    },
+    {
+      "name": "spotify.playlist",
+      "type": "java.lang.String",
+      "description": "Description for spotify.playlist."
+    },
+    {
+      "name": "youtube.search",
+      "type": "java.lang.String",
+      "description": "Description for youtube.search."
+    },
+    {
+      "name": "youtube.playlist",
+      "type": "java.lang.String",
+      "description": "Description for youtube.playlist."
+    }
+  ] }
