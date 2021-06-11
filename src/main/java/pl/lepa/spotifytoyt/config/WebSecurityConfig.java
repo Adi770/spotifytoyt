@@ -1,5 +1,6 @@
 package pl.lepa.spotifytoyt.config;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -20,9 +21,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
-
-      http.authorizeRequests().antMatchers("/").authenticated()
-              .and().cors().disable().oauth2Login().defaultSuccessUrl("/home").successHandler(oauth2SuccessHandler);
+      http.cors().disable().oauth2Login().defaultSuccessUrl("/home").successHandler(oauth2SuccessHandler);
     }
 
 
@@ -30,5 +29,8 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     public RestTemplate restTemplate() {
         return new RestTemplate();
     }
+
+    @Bean
+    public ObjectMapper objectMapper(){ return new ObjectMapper();}
 
 }

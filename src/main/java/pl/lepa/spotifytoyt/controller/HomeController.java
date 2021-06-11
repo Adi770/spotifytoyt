@@ -2,6 +2,7 @@ package pl.lepa.spotifytoyt.controller;
 
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.ObjectFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
@@ -14,6 +15,9 @@ import org.springframework.web.bind.annotation.SessionAttributes;
 import org.springframework.web.client.RestTemplate;
 import pl.lepa.spotifytoyt.service.YoutubeService;
 
+import javax.servlet.http.HttpSession;
+import javax.servlet.http.HttpSessionBindingEvent;
+
 @Controller
 @Slf4j
 @SessionAttributes({"tokenGoogle", "tokenSpotify"})
@@ -21,7 +25,6 @@ public class HomeController {
 
 
     private YoutubeService youtubeService;
-
 
     @Autowired
     public HomeController(YoutubeService youtubeService) {
@@ -42,6 +45,7 @@ public class HomeController {
             model.addAttribute("youtube", token2.getPrincipal().getAttribute("name"));
         } catch (NullPointerException e) {
             log.info("token is null");
+            return "redirect:/";
         }
 
         try {
@@ -49,6 +53,7 @@ public class HomeController {
             model.addAttribute("spotify", token3.getPrincipal().getAttribute("display_name"));
         } catch (NullPointerException e) {
             log.info("token is null");
+            return "redirect:/";
         }
 
         model.addAttribute("spotifyList", null);

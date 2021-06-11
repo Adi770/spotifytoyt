@@ -1,5 +1,7 @@
 package pl.lepa.spotifytoyt.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
@@ -11,6 +13,11 @@ import org.springframework.ui.Model;
 import org.springframework.web.client.RestTemplate;
 import pl.lepa.spotifytoyt.model.spotify.SpotifyPlaylistItems;
 import pl.lepa.spotifytoyt.model.youtube.Youtube;
+import pl.lepa.spotifytoyt.model.youtube.add.PlaylistItem;
+import pl.lepa.spotifytoyt.model.youtube.add.ResourceId;
+import pl.lepa.spotifytoyt.model.youtube.add.Snippet;
+import pl.lepa.spotifytoyt.model.youtube.create.answer.Answer;
+import pl.lepa.spotifytoyt.model.youtube.create.playlist.Playlist;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -22,22 +29,27 @@ import java.util.regex.Pattern;
 public class YoutubeService {
 
 
+
+    static final String URL_YOUTUBE_SEARCH = "https://www.googleapis.com/youtube/v3/search?maxResults=1&q=";
+    static final String URL_YOUTUBE_PLAYLIST_ITEMS = "https://youtube.googleapis.com/youtube/v3/playlistItems?part=snippet";
+    static final String URL_YOUTUBE_PLAYLIST = "https://youtube.googleapis.com/youtube/v3/playlists?part=snippet";
+    static final String URL_SPOTIFY_PLAYLIST = "https://api.spotify.com/v1/playlists";
+    static final String LINK_YOUTUBE_PLAYLIST="https://www.youtube.com/playlist?list=";
+
     public static final String REGEX_START = Pattern.quote("playlist/");
     public static final String REGEX_END = Pattern.quote("?");
-    static final String URL_YOUTUBE_SEARCH = "https://www.googleapis.com/youtube/v3/search?maxResults=1&q=";
-    static final String URL_YOUTUBE_PLAYLIST = "https://www.googleapis.com/youtube/v3/playlists";
-    static final String URL_SPOTIFY_PLAYLIST = "https://api.spotify.com/v1/playlists";
     static final Pattern SPOTIFY_PATTERN = Pattern.compile(REGEX_START + "(.*?)" + REGEX_END);
 
 
     private RestTemplate restTemplate;
     private OAuth2AuthorizedClientService clientService;
-
+    private ObjectMapper objectMapper;
 
     @Autowired
-    public YoutubeService(RestTemplate restTemplate, OAuth2AuthorizedClientService clientService) {
+    public YoutubeService(RestTemplate restTemplate, OAuth2AuthorizedClientService clientService,ObjectMapper objectMapper) {
         this.restTemplate = restTemplate;
         this.clientService = clientService;
+        this.objectMapper=objectMapper;
     }
 
     public HttpHeaders addHeaders(OAuth2AuthenticationToken token) {
@@ -61,7 +73,7 @@ public class YoutubeService {
 
     public ResponseEntity<String> getYoutubePlaylist(String url, Model model) {
         OAuth2AuthenticationToken tokenGoogle = (OAuth2AuthenticationToken) model.getAttribute("tokenGoogle");
-        return restTemplate.exchange("https://youtube.googleapis.com/youtube/v3/playlists?mine=true", HttpMethod.GET, headersRequest(addHeaders(tokenGoogle)), String.class);
+        return restTemplate.exchange(URL_YOUTUBE_PLAYLIST, HttpMethod.GET, headersRequest(addHeaders(tokenGoogle)), String.class);
 
     }
 
@@ -71,7 +83,7 @@ public class YoutubeService {
             log.info("playlist id " + matcher.group(1).toString());
             return matcher.group(1).toString();
         } else {
-            log.warn("incorrect spotify url");
+            log.warn("incorrect url");
         }
         return url;
     }
@@ -89,19 +101,14 @@ public class YoutubeService {
     public String convertSpotifyToYoutubePlaylist(SpotifyPlaylistItems spotifyPlaylist, Model model) {
         Set<String> videoIdList = new HashSet<>();
         for (pl.lepa.spotifytoyt.model.spotify.Item name : spotifyPlaylist.getItems()) {
-//            videoIdList.add(findYoutubeClip(name.track.getName().toString(),model));
-            for (int i = 0; i < 5; i++) {
-                videoIdList.add(findYoutubeClip(name.track.getName().toString(), model));
-            }
+            videoIdList.add(findYoutubeClip(name.track.getName(), model));
             break;
         }
-
         log.info(videoIdList.toString());
         return createYoutubePlaylist(videoIdList, model);
     }
 
     public String findYoutubeClip(String name, Model model) {
-
         OAuth2AuthenticationToken tokenGoogle = (OAuth2AuthenticationToken) model.getAttribute("tokenGoogle");
         ResponseEntity<Youtube> entity = restTemplate.exchange(URL_YOUTUBE_SEARCH + name, HttpMethod.GET, headersRequest(addHeaders(tokenGoogle)), Youtube.class);
         return entity.getBody().items.get(0).id.getVideoId();
@@ -109,9 +116,43 @@ public class YoutubeService {
 
     public String createYoutubePlaylist(Set<String> videoIdList, Model model) {
         OAuth2AuthenticationToken tokenGoogle = (OAuth2AuthenticationToken) model.getAttribute("tokenGoogle");
-       // ResponseEntity<String> entity = restTemplate.exchange(URL_SPOTIFY_PLAYLIST, HttpMethod.POST, headersRequest(addHeaders(tokenGoogle)), String.class, );
 
-        return "";
+        Playlist newPlaylist = new Playlist();
+        newPlaylist.setKind("youtube#playlist");
+        newPlaylist.setSnippet(new pl.lepa.spotifytoyt.model.youtube.create.playlist.Snippet("newPlaylist", "PL", "Playlist generate by SpotifyToYoutube"));
+
+        String jsonObject ="";
+        try {
+            jsonObject = objectMapper.writeValueAsString(newPlaylist);
+
+        } catch (RuntimeException | JsonProcessingException e) {
+            e.printStackTrace();
+        }
+        HttpEntity<String> request = new HttpEntity<String>(jsonObject,addHeaders(tokenGoogle));
+        ResponseEntity<Answer> entity=restTemplate.postForEntity(URL_YOUTUBE_PLAYLIST,request,Answer.class);
+
+
+        return addToYoutubePlaylist(entity.getBody().id, videoIdList, model);
+    }
+
+    public String addToYoutubePlaylist(String id, Set<String> videoIdList, Model model) {
+
+        OAuth2AuthenticationToken tokenGoogle = (OAuth2AuthenticationToken) model.getAttribute("tokenGoogle");
+        PlaylistItem newPlaylistItem = new PlaylistItem();
+        newPlaylistItem.setSnippet(new Snippet(id,new ResourceId("youtube#video", "")));
+        String jsonObject ="";
+
+        for (String videoId : videoIdList) {
+            newPlaylistItem.getSnippet().getResourceId().setVideoId(videoId);
+            try {
+                jsonObject =objectMapper.writeValueAsString(newPlaylistItem);
+            } catch (JsonProcessingException e) {
+                e.printStackTrace();
+            }
+            HttpEntity<String> request = new HttpEntity<String>(jsonObject,addHeaders(tokenGoogle));
+            ResponseEntity<String> entity= restTemplate.postForEntity(URL_YOUTUBE_PLAYLIST_ITEMS,request,String.class);
+        }
+        return LINK_YOUTUBE_PLAYLIST+id;
     }
 
 
