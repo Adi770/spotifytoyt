@@ -15,6 +15,7 @@ import java.net.URI;
 
 
 @Slf4j
+@Deprecated
 public class CustomAuthorizationCodeInstalledApp {
     private final AuthorizationCodeFlow flow;
     private final VerificationCodeReceiver receiver;

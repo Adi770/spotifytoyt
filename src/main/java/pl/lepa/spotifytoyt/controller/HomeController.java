@@ -2,87 +2,85 @@ package pl.lepa.spotifytoyt.controller;
 
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.ObjectFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.SessionAttributes;
-import org.springframework.web.client.RestTemplate;
-import pl.lepa.spotifytoyt.service.YoutubeService;
-
-import javax.servlet.http.HttpSession;
-import javax.servlet.http.HttpSessionBindingEvent;
+import pl.lepa.spotifytoyt.service.MusicService;
 
 @Controller
 @Slf4j
-@SessionAttributes({"tokenGoogle", "tokenSpotify"})
+@SessionAttributes({"tokenGoogle", "tokenSpotify", "spotifyList"})
 public class HomeController {
 
 
-    private YoutubeService youtubeService;
+    private static final String SPOTIFY_LIST = "spotifyList";
+    private MusicService musicService;
 
     @Autowired
-    public HomeController(YoutubeService youtubeService) {
-        this.youtubeService = youtubeService;
+    public HomeController(MusicService musicService) {
+        this.musicService = musicService;
+    }
+
+    private void getToken() {
 
     }
 
-    //TODO spotify and google works now create cookie to store
-    //TODO session working. Now i must create cookies to save data and make request to api like getting playlist or creating playlist
     @GetMapping("/home")
     public String getHomepage(Model model) {
 
-        OAuth2AuthenticationToken token2 = (OAuth2AuthenticationToken) model.getAttribute("tokenGoogle");
-        OAuth2AuthenticationToken token3 = (OAuth2AuthenticationToken) model.getAttribute("tokenSpotify");
+        OAuth2AuthenticationToken tokenGoogle = (OAuth2AuthenticationToken) model.getAttribute("tokenGoogle");
+        OAuth2AuthenticationToken tokenSpotify = (OAuth2AuthenticationToken) model.getAttribute("tokenSpotify");
 
         try {
-            log.info(token2.getPrincipal().getAttribute("name"));
-            model.addAttribute("youtube", token2.getPrincipal().getAttribute("name"));
+            log.info(tokenGoogle.getPrincipal().getAttribute("name"));
+            model.addAttribute("youtube", tokenGoogle.getPrincipal().getAttribute("name"));
         } catch (NullPointerException e) {
-            log.info("token is null");
+            log.warn("Youtube token is null");
+            return "redirect:/oauth2/authorization/google";
+        }
+
+        try {
+            log.info(tokenSpotify.getPrincipal().getAttribute("display_name"));
+            model.addAttribute("spotify", tokenSpotify.getPrincipal().getAttribute("display_name"));
+        } catch (NullPointerException e) {
+            log.warn("Spotify token is null");
+            return "redirect:/oauth2/authorization/spotify";
+        }
+        if (!model.containsAttribute(SPOTIFY_LIST)) {
             return "redirect:/";
         }
+        // model.addAttribute("spotifyList", "https://open.spotify.com/playlist/4eNyLaYTO6OfN62W54qUes?si=gMQSDTT2Qm2qL_o-61tvFA&nd=1");
+        log.info(musicService.convertSpotifyToYoutube(model.getAttribute(SPOTIFY_LIST).toString(), model));
 
-        try {
-            log.info(token3.getPrincipal().getAttribute("display_name"));
-            model.addAttribute("spotify", token3.getPrincipal().getAttribute("display_name"));
-        } catch (NullPointerException e) {
-            log.info("token is null");
-            return "redirect:/";
-        }
+        return "homepage";
 
-        model.addAttribute("spotifyList", null);
-
-        try {
-
-            RestTemplate restTemplate = new RestTemplate();
-            HttpEntity entity = new HttpEntity(youtubeService.addHeaders(token2));
-
-            String url = "https://youtube.googleapis.com/youtube/v3/playlists?maxResults=25&mine=true";
-            ResponseEntity<String> responseEntity = restTemplate.exchange(url, HttpMethod.GET, entity, String.class);
-            log.info(responseEntity.toString());
-
-        } catch (NullPointerException e) {
-            log.info("token is null");
-        } finally {
-            log.warn("test class");
-            //log.info(youtubeService.getYoutubePlaylist("",model).toString());
-            log.warn("test class");
-            log.info(youtubeService.getSpotifyPlaylist("https://open.spotify.com/playlist/4eNyLaYTO6OfN62W54qUes?si=gMQSDTT2Qm2qL_o-61tvFA&nd=1",model).toString());
-            //youtubeService.regex("https://open.spotify.com/playlist/4eNyLaYTO6OfN62W54qUes?si=gMQSDTT2Qm2qL_o-61tvFA&nd=1");
-            return "homepage";
-        }
 
     }
 
     @GetMapping("/")
-    public String getMainPage() {
+    public String getStart(Model model) {
+        OAuth2AuthenticationToken tokenGoogle = (OAuth2AuthenticationToken) model.getAttribute("tokenGoogle");
+        OAuth2AuthenticationToken tokenSpotify = (OAuth2AuthenticationToken) model.getAttribute("tokenSpotify");
+
+        if (tokenGoogle != null) {
+            model.addAttribute("youtube", tokenGoogle.getPrincipal().getAttribute("name"));
+        }
+        if (tokenSpotify != null) {
+            model.addAttribute("spotify", tokenSpotify.getPrincipal().getAttribute("display_name"));
+        }
+
         return "homepage";
+    }
+
+    @PostMapping("/convertSpotify")
+    public String convertPlaylist(Model model, @RequestParam String playlistToConvert) {
+        model.addAttribute(SPOTIFY_LIST, playlistToConvert);
+        return "redirect:home";
     }
 
     @GetMapping("/Google")
@@ -99,7 +97,6 @@ public class HomeController {
         return "redirect:home";
 
     }
-
 
 
 }

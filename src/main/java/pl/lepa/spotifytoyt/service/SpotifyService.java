@@ -1,29 +1,53 @@
 package pl.lepa.spotifytoyt.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.*;
+import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
+import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
+import pl.lepa.spotifytoyt.model.spotify.SpotifyPlaylistItems;
 
 @Service
 @Slf4j
 public class SpotifyService {
 
-    private static final String URL_SPOTIFY = "";
 
-    private RestTemplate restTemplate;
-    private OAuth2AuthorizedClientService clientService;
+    static final String API_URL_SPOTIFY_PLAYLIST = "https://api.spotify.com/v1/playlists";
 
 
-    public SpotifyService() {
+    private final RestTemplate restTemplate;
+    private final OAuth2AuthorizedClientService clientService;
+    private final ObjectMapper objectMapper;
 
+    @Autowired
+    public SpotifyService(RestTemplate restTemplate, OAuth2AuthorizedClientService clientService, ObjectMapper objectMapper) {
+        this.restTemplate = restTemplate;
+        this.clientService = clientService;
+        this.objectMapper = objectMapper;
     }
 
-    public void getPlaylist(String url){
+    public HttpHeaders customHeaders(OAuth2AuthenticationToken token) {
+        OAuth2AuthorizedClient authorizedClient;
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
 
+        try {
+            authorizedClient = this.clientService.loadAuthorizedClient(token.getAuthorizedClientRegistrationId(), token.getName());
+            headers.set("Authorization", "Bearer " + authorizedClient.getAccessToken().getTokenValue());
+        } catch (NullPointerException e) {
+            log.info("token is null");
+        }
+        return headers;
     }
 
-
-
+    public SpotifyPlaylistItems getSpotifyPlaylist(String playlistId, OAuth2AuthenticationToken token) {
+        String playlistID = "/" +playlistId;
+        ResponseEntity<SpotifyPlaylistItems> template = restTemplate.exchange(API_URL_SPOTIFY_PLAYLIST + playlistID + "/tracks", HttpMethod.GET, new HttpEntity<>(customHeaders(token)), SpotifyPlaylistItems.class);
+        return template.getBody();
+    }
 
 }

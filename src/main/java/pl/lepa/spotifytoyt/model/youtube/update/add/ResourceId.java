@@ -1,4 +1,4 @@
-package pl.lepa.spotifytoyt.model.youtube.add;
+package pl.lepa.spotifytoyt.model.youtube.update.add;
 
 
 import lombok.Data;
