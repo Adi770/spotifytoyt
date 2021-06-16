@@ -36,6 +36,7 @@ public class YoutubeService {
     private OAuth2AuthenticationToken tokenGoogle;
 
     private final RestTemplate restTemplate;
+
     private final OAuth2AuthorizedClientService clientService;
     private final ObjectMapper objectMapper;
 
@@ -70,9 +71,11 @@ public class YoutubeService {
 
 
     public String createSetYoutubeClipId(SpotifyPlaylistItems spotifyPlaylist,OAuth2AuthenticationToken tokenGoogle) {
+
         getToken(tokenGoogle);
 
         Set<String> videoIdList = new HashSet<>();
+
         for (pl.lepa.spotifytoyt.model.spotify.Item name : spotifyPlaylist.getItems()) {
             videoIdList.add(findYoutubeClip(name.track.getName()));
             break; //because consume to much google resource

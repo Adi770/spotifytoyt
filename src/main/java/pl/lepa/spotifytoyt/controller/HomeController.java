@@ -12,6 +12,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.SessionAttributes;
 import pl.lepa.spotifytoyt.service.MusicService;
 
+import java.util.Objects;
+
 @Controller
 @Slf4j
 @SessionAttributes({"tokenGoogle", "tokenSpotify", "spotifyList"})
@@ -19,16 +21,13 @@ public class HomeController {
 
 
     private static final String SPOTIFY_LIST = "spotifyList";
-    private MusicService musicService;
+    private final MusicService musicService;
 
     @Autowired
     public HomeController(MusicService musicService) {
         this.musicService = musicService;
     }
 
-    private void getToken() {
-
-    }
 
     @GetMapping("/home")
     public String getHomepage(Model model) {
@@ -55,8 +54,9 @@ public class HomeController {
             return "redirect:/";
         }
         // model.addAttribute("spotifyList", "https://open.spotify.com/playlist/4eNyLaYTO6OfN62W54qUes?si=gMQSDTT2Qm2qL_o-61tvFA&nd=1");
-        log.info(musicService.convertSpotifyToYoutube(model.getAttribute(SPOTIFY_LIST).toString(), model));
+       // log.info(musicService.convertSpotifyToYoutube(Objects.requireNonNull(model.getAttribute(SPOTIFY_LIST)).toString(), model));
 
+        model.addAttribute("spotifyList",musicService.convertSpotifyToYoutube(Objects.requireNonNull(model.getAttribute(SPOTIFY_LIST)).toString(), model));
         return "homepage";
 
 
