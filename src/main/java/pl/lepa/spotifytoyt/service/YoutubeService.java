@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
@@ -39,6 +40,10 @@ public class YoutubeService {
 
     private final OAuth2AuthorizedClientService clientService;
     private final ObjectMapper objectMapper;
+
+    @Value("${youtube.api.key}")
+    private String youtubeApiKey;
+
 
     @Autowired
     public YoutubeService(RestTemplate restTemplate, OAuth2AuthorizedClientService clientService, ObjectMapper objectMapper) {
