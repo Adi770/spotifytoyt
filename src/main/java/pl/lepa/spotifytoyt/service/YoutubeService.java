@@ -89,8 +89,9 @@ public class YoutubeService {
         return createYoutubePlaylist(videoIdList);
     }
 
+
     public String findYoutubeClip(String name) {
-        ResponseEntity<Youtube> entity = restTemplate.exchange(API_URL_YOUTUBE_SEARCH + name, HttpMethod.GET, new HttpEntity<>(customHeaders(this.tokenGoogle)), Youtube.class);
+        ResponseEntity<Youtube> entity = restTemplate.exchange(API_URL_YOUTUBE_SEARCH + name+"&key="+youtubeApiKey, HttpMethod.GET, new HttpEntity<>(new HttpHeaders()), Youtube.class);
         return Objects.requireNonNull(entity.getBody()).items.get(0).id.getVideoId();
     }
 

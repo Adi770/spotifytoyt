@@ -6,10 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.SessionAttributes;
+import org.springframework.web.bind.annotation.*;
 import pl.lepa.spotifytoyt.service.MusicService;
 
 import java.util.Objects;
@@ -54,13 +51,12 @@ public class HomeController {
             return "redirect:/";
         }
         // model.addAttribute("spotifyList", "https://open.spotify.com/playlist/4eNyLaYTO6OfN62W54qUes?si=gMQSDTT2Qm2qL_o-61tvFA&nd=1");
-       // log.info(musicService.convertSpotifyToYoutube(Objects.requireNonNull(model.getAttribute(SPOTIFY_LIST)).toString(), model));
+        // log.info(musicService.convertSpotifyToYoutube(Objects.requireNonNull(model.getAttribute(SPOTIFY_LIST)).toString(), model));
 
-        model.addAttribute("spotifyList",musicService.convertSpotifyToYoutube(Objects.requireNonNull(model.getAttribute(SPOTIFY_LIST)).toString(), model));
+        model.addAttribute("spotifyList", musicService.convertSpotifyToYoutube(Objects.requireNonNull(model.getAttribute(SPOTIFY_LIST)).toString(), model));
         return "homepage";
-
-
     }
+
 
     @GetMapping("/")
     public String getStart(Model model) {
