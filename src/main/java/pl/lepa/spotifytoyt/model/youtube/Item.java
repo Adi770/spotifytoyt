@@ -4,7 +4,7 @@ import lombok.Data;
 
 @Data
 public class Item {
-    public String kind;
-    public String etag;
-    public VideoId id;
+    private String kind;
+    private String etag;
+    private VideoId id;
 }

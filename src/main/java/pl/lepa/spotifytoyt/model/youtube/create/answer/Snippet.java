@@ -6,11 +6,11 @@ import java.util.Date;
 
 @Data
 public class Snippet {
-    public Date publishedAt;
-    public String channelId;
-    public String title;
-    public String description;
-    public String channelTitle;
-    public String defaultLanguage;
-    public Localized localized;
+    private Date publishedAt;
+    private String channelId;
+    private String title;
+    private String description;
+    private String channelTitle;
+    private String defaultLanguage;
+    private Localized localized;
 }

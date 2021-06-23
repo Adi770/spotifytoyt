@@ -1,6 +1,5 @@
 package pl.lepa.spotifytoyt.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
@@ -21,13 +20,12 @@ public class SpotifyService {
 
     private final RestTemplate restTemplate;
     private final OAuth2AuthorizedClientService clientService;
-    private final ObjectMapper objectMapper;
+
 
     @Autowired
-    public SpotifyService(RestTemplate restTemplate, OAuth2AuthorizedClientService clientService, ObjectMapper objectMapper) {
+    public SpotifyService(RestTemplate restTemplate, OAuth2AuthorizedClientService clientService) {
         this.restTemplate = restTemplate;
         this.clientService = clientService;
-        this.objectMapper = objectMapper;
     }
 
     public HttpHeaders customHeaders(OAuth2AuthenticationToken token) {

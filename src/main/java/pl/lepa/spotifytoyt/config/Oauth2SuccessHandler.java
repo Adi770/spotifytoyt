@@ -5,8 +5,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
-import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.SessionAttributes;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -17,17 +15,14 @@ import java.io.IOException;
 @Component
 public class Oauth2SuccessHandler implements AuthenticationSuccessHandler {
 
-    public Oauth2SuccessHandler() {
-    }
-
     @Override
     public void onAuthenticationSuccess(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse,
                                         Authentication authentication) throws IOException, ServletException {
-        String name = "default";
+        String name;
 
         log.info(authentication.toString());
         authentication.getDetails();
-        name = ((OAuth2AuthenticationToken) authentication).getAuthorizedClientRegistrationId().toString();
+        name = ((OAuth2AuthenticationToken) authentication).getAuthorizedClientRegistrationId();
         log.info(name);
         switch (name) {
             case "google":

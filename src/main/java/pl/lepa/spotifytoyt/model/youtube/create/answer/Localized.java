@@ -5,6 +5,6 @@ import lombok.Data;
 
 @Data
 public class Localized {
-    public String title;
-    public String description;
+    private String title;
+    private String description;
 }

@@ -4,5 +4,5 @@ import lombok.Data;
 
 @Data
 public class Item{
-    public Track track;
+    private Track track;
 }

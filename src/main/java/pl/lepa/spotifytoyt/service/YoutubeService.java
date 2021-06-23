@@ -13,11 +13,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import pl.lepa.spotifytoyt.model.spotify.SpotifyPlaylistItems;
 import pl.lepa.spotifytoyt.model.youtube.Youtube;
+import pl.lepa.spotifytoyt.model.youtube.create.answer.Answer;
+import pl.lepa.spotifytoyt.model.youtube.create.playlist.Playlist;
 import pl.lepa.spotifytoyt.model.youtube.update.add.PlaylistItem;
 import pl.lepa.spotifytoyt.model.youtube.update.add.ResourceId;
 import pl.lepa.spotifytoyt.model.youtube.update.add.Snippet;
-import pl.lepa.spotifytoyt.model.youtube.create.answer.Answer;
-import pl.lepa.spotifytoyt.model.youtube.create.playlist.Playlist;
 
 import java.util.HashSet;
 import java.util.Objects;
@@ -82,7 +82,7 @@ public class YoutubeService {
         Set<String> videoIdList = new HashSet<>();
 
         for (pl.lepa.spotifytoyt.model.spotify.Item name : spotifyPlaylist.getItems()) {
-            videoIdList.add(findYoutubeClip(name.track.getName()));
+            videoIdList.add(findYoutubeClip(name.getTrack().getName()));
             break; //because consume to much google resource
         }
         log.info(videoIdList.toString());
@@ -92,7 +92,7 @@ public class YoutubeService {
 
     public String findYoutubeClip(String name) {
         ResponseEntity<Youtube> entity = restTemplate.exchange(API_URL_YOUTUBE_SEARCH + name+"&key="+youtubeApiKey, HttpMethod.GET, new HttpEntity<>(new HttpHeaders()), Youtube.class);
-        return Objects.requireNonNull(entity.getBody()).items.get(0).id.getVideoId();
+        return Objects.requireNonNull(entity.getBody()).getItems().get(0).getId().getVideoId();
     }
 
     public String createYoutubePlaylist(Set<String> videoIdList) {
@@ -113,7 +113,7 @@ public class YoutubeService {
         ResponseEntity<Answer> entity=restTemplate.postForEntity(API_URL_YOUTUBE_PLAYLIST,request,Answer.class);
 
 
-        return addToYoutubePlaylist(Objects.requireNonNull(entity.getBody()).id, videoIdList);
+        return addToYoutubePlaylist(Objects.requireNonNull(entity.getBody()).getId(), videoIdList);
     }
 
     public String addToYoutubePlaylist(String id, Set<String> videoIdList) {

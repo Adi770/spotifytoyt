@@ -49,7 +49,7 @@ public class MusicService {
     }
 
     public String convertSpotifyToYoutube(String url,Model model) {
-        getTokenFromSession(model);
+       getTokenFromSession(model);
        return getMusicPlaylist(findPlaylistId(url));
     }
 

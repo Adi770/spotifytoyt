@@ -8,10 +8,10 @@ import java.util.List;
 @Data
 public class Youtube {
 
-    public String kind;
-    public String etag;
-    public String nextPageToken;
-    public String regionCode;
-    public PageInfo pageInfo;
-    public List<Item> items;
+    private String kind;
+    private String etag;
+    private String nextPageToken;
+    private String regionCode;
+    private PageInfo pageInfo;
+    private List<Item> items;
 }

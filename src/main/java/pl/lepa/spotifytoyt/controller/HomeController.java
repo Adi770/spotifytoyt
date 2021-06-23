@@ -6,7 +6,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.SessionAttributes;
+import org.springframework.web.bind.support.SessionStatus;
 import pl.lepa.spotifytoyt.service.MusicService;
 
 import java.util.Objects;
@@ -18,6 +22,10 @@ public class HomeController {
 
 
     private static final String SPOTIFY_LIST = "spotifyList";
+    private static final String TOKEN_GOOGLE = "tokenGoogle";
+    private static final String TOKEN_SPOTIFY = "tokenSpotify";
+    private static final String NAME = "name";
+    private static final String DISPLAY_NAME = "display_name";
     private final MusicService musicService;
 
     @Autowired
@@ -29,20 +37,20 @@ public class HomeController {
     @GetMapping("/home")
     public String getHomepage(Model model) {
 
-        OAuth2AuthenticationToken tokenGoogle = (OAuth2AuthenticationToken) model.getAttribute("tokenGoogle");
-        OAuth2AuthenticationToken tokenSpotify = (OAuth2AuthenticationToken) model.getAttribute("tokenSpotify");
+        OAuth2AuthenticationToken tokenGoogle = (OAuth2AuthenticationToken) model.getAttribute(TOKEN_GOOGLE);
+        OAuth2AuthenticationToken tokenSpotify = (OAuth2AuthenticationToken) model.getAttribute(TOKEN_SPOTIFY);
 
         try {
-            log.info(tokenGoogle.getPrincipal().getAttribute("name"));
-            model.addAttribute("youtube", tokenGoogle.getPrincipal().getAttribute("name"));
+            log.info(tokenGoogle.getPrincipal().getAttribute(NAME));
+            model.addAttribute("youtube", tokenGoogle.getPrincipal().getAttribute(NAME));
         } catch (NullPointerException e) {
             log.warn("Youtube token is null");
             return "redirect:/oauth2/authorization/google";
         }
 
         try {
-            log.info(tokenSpotify.getPrincipal().getAttribute("display_name"));
-            model.addAttribute("spotify", tokenSpotify.getPrincipal().getAttribute("display_name"));
+            log.info(tokenSpotify.getPrincipal().getAttribute(DISPLAY_NAME));
+            model.addAttribute("spotify", tokenSpotify.getPrincipal().getAttribute(DISPLAY_NAME));
         } catch (NullPointerException e) {
             log.warn("Spotify token is null");
             return "redirect:/oauth2/authorization/spotify";
@@ -50,24 +58,21 @@ public class HomeController {
         if (!model.containsAttribute(SPOTIFY_LIST)) {
             return "redirect:/";
         }
-        // model.addAttribute("spotifyList", "https://open.spotify.com/playlist/4eNyLaYTO6OfN62W54qUes?si=gMQSDTT2Qm2qL_o-61tvFA&nd=1");
-        // log.info(musicService.convertSpotifyToYoutube(Objects.requireNonNull(model.getAttribute(SPOTIFY_LIST)).toString(), model));
-
-        model.addAttribute("spotifyList", musicService.convertSpotifyToYoutube(Objects.requireNonNull(model.getAttribute(SPOTIFY_LIST)).toString(), model));
+        model.addAttribute(SPOTIFY_LIST, musicService.convertSpotifyToYoutube(Objects.requireNonNull(model.getAttribute(SPOTIFY_LIST)).toString(), model));
         return "homepage";
     }
 
 
     @GetMapping("/")
     public String getStart(Model model) {
-        OAuth2AuthenticationToken tokenGoogle = (OAuth2AuthenticationToken) model.getAttribute("tokenGoogle");
-        OAuth2AuthenticationToken tokenSpotify = (OAuth2AuthenticationToken) model.getAttribute("tokenSpotify");
+        OAuth2AuthenticationToken tokenGoogle = (OAuth2AuthenticationToken) model.getAttribute(TOKEN_GOOGLE);
+        OAuth2AuthenticationToken tokenSpotify = (OAuth2AuthenticationToken) model.getAttribute(TOKEN_SPOTIFY);
 
         if (tokenGoogle != null) {
-            model.addAttribute("youtube", tokenGoogle.getPrincipal().getAttribute("name"));
+            model.addAttribute("youtube", tokenGoogle.getPrincipal().getAttribute(NAME));
         }
         if (tokenSpotify != null) {
-            model.addAttribute("spotify", tokenSpotify.getPrincipal().getAttribute("display_name"));
+            model.addAttribute("spotify", tokenSpotify.getPrincipal().getAttribute(DISPLAY_NAME));
         }
 
         return "homepage";
@@ -82,16 +87,23 @@ public class HomeController {
     @GetMapping("/Google")
     public String loginWithGoogleAccount(Model model, OAuth2AuthenticationToken token) {
         log.info("token from google");
-        model.addAttribute("tokenGoogle", token);
+        model.addAttribute(TOKEN_GOOGLE, token);
         return "redirect:home";
     }
 
     @GetMapping("/Spotify")
     public String loginWithSpotifyAccount(Model model, OAuth2AuthenticationToken token) {
         log.info("token from spotify");
-        model.addAttribute("tokenSpotify", token);
+        model.addAttribute(TOKEN_SPOTIFY, token);
         return "redirect:home";
 
+    }
+
+    @GetMapping("/logout")
+    public String logout(SessionStatus sessionStatus){
+
+        sessionStatus.setComplete();
+        return "redirect:/";
     }
 
 

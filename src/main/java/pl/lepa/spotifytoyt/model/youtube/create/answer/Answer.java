@@ -4,8 +4,8 @@ import lombok.Data;
 
 @Data
 public class Answer {
-    public String kind;
-    public String etag;
-    public String id;
-    public Snippet snippet;
+    private String kind;
+    private String etag;
+    private String id;
+    private Snippet snippet;
 }
