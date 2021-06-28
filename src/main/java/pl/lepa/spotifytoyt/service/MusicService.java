@@ -2,6 +2,10 @@ package pl.lepa.spotifytoyt.service;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
+import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.stereotype.Service;
 import org.springframework.ui.Model;
@@ -25,17 +29,35 @@ public class MusicService {
     private OAuth2AuthenticationToken tokenSpotify;
     private OAuth2AuthenticationToken tokenGoogle;
 
+    private final OAuth2AuthorizedClientService clientService;
+
 
     @Autowired
-    public MusicService(YoutubeService youtubeService, SpotifyService spotifyService) {
+    public MusicService(YoutubeService youtubeService, SpotifyService spotifyService, OAuth2AuthorizedClientService clientService) {
         this.youtubeService = youtubeService;
         this.spotifyService = spotifyService;
+        this.clientService = clientService;
     }
 
     public void getTokenFromSession(Model model) {
         this.tokenGoogle = (OAuth2AuthenticationToken) model.getAttribute(TOKEN_GOOGLE);
         this.tokenSpotify = (OAuth2AuthenticationToken) model.getAttribute(TOKEN_SPOTIFY);
     }
+
+    public HttpHeaders customHeaders(OAuth2AuthenticationToken token) {
+        OAuth2AuthorizedClient authorizedClient;
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        try {
+            authorizedClient = this.clientService.loadAuthorizedClient(token.getAuthorizedClientRegistrationId(), token.getName());
+            headers.set("Authorization", "Bearer " + authorizedClient.getAccessToken().getTokenValue());
+        } catch (NullPointerException e) {
+            log.info("token is null");
+        }
+        return headers;
+    }
+
 
     public String findPlaylistId(String url) {
         Matcher matcher = SPOTIFY_PATTERN.matcher(url);
@@ -54,7 +76,7 @@ public class MusicService {
     }
 
     public String getMusicPlaylist(String playlistId) {
-      return youtubeService.createSetYoutubeClipId(spotifyService.getSpotifyPlaylist(playlistId, this.tokenSpotify),this.tokenGoogle);
+      return youtubeService.createSetYoutubeClipId(spotifyService.getSpotifyPlaylist(playlistId, customHeaders(this.tokenSpotify)),customHeaders(this.tokenGoogle));
 
     }
 }

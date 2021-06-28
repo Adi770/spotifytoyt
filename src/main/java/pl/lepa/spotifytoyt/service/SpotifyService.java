@@ -42,9 +42,9 @@ public class SpotifyService {
         return headers;
     }
 
-    public SpotifyPlaylistItems getSpotifyPlaylist(String playlistId, OAuth2AuthenticationToken token) {
+    public SpotifyPlaylistItems getSpotifyPlaylist(String playlistId, HttpHeaders headers) {
         String playlistID = "/" +playlistId;
-        ResponseEntity<SpotifyPlaylistItems> template = restTemplate.exchange(API_URL_SPOTIFY_PLAYLIST + playlistID + "/tracks", HttpMethod.GET, new HttpEntity<>(customHeaders(token)), SpotifyPlaylistItems.class);
+        ResponseEntity<SpotifyPlaylistItems> template = restTemplate.exchange(API_URL_SPOTIFY_PLAYLIST + playlistID + "/tracks", HttpMethod.GET, new HttpEntity<>(headers), SpotifyPlaylistItems.class);
         return template.getBody();
     }
 

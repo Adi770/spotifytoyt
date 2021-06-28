@@ -5,6 +5,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.converter.StringHttpMessageConverter;
+import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.web.client.RestTemplate;
@@ -28,15 +30,23 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     }
 
 
+//    @Bean
+//    public RestTemplate restTemplate() {
+//        ///RestTemplate restTemplate=res
+//        return restTemplateBuilder()
+//                .errorHandler(new RestTemplateErrorHandler())
+//                .build();
+//
+//    }
+
     @Bean
     public RestTemplate restTemplate() {
         ///RestTemplate restTemplate=res
-        return restTemplateBuilder()
-                .errorHandler(new RestTemplateErrorHandler())
-                .build();
+
+        return new RestTemplate();
+
 
     }
-
     @Bean
     public RestTemplateBuilder restTemplateBuilder() {
         return new RestTemplateBuilder();

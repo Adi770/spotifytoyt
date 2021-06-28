@@ -14,4 +14,7 @@ public class Youtube {
     private String regionCode;
     private PageInfo pageInfo;
     private List<Item> items;
+
+    public Youtube() {
+    }
 }

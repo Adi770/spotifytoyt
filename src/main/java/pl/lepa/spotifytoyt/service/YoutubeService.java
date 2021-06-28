@@ -2,13 +2,14 @@ package pl.lepa.spotifytoyt.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.*;
-import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
-import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
-import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import pl.lepa.spotifytoyt.model.spotify.SpotifyPlaylistItems;
@@ -25,64 +26,45 @@ import java.util.Set;
 
 @Service
 @Slf4j
+@Data
 public class YoutubeService {
-
-
 
     static final String API_URL_YOUTUBE_SEARCH = "https://www.googleapis.com/youtube/v3/search?maxResults=1&q=";
     static final String API_URL_YOUTUBE_PLAYLIST_ITEMS = "https://youtube.googleapis.com/youtube/v3/playlistItems?part=snippet";
     static final String API_URL_YOUTUBE_PLAYLIST = "https://youtube.googleapis.com/youtube/v3/playlists?part=snippet";
-    static final String LINK_YOUTUBE_PLAYLIST="https://www.youtube.com/playlist?list=";
+    static final String LINK_YOUTUBE_PLAYLIST = "https://www.youtube.com/playlist?list=";
 
-    private OAuth2AuthenticationToken tokenGoogle;
+    private HttpHeaders googleHeaders;
 
-    private final RestTemplate restTemplate;
+    private RestTemplate restTemplate;
 
-    private final OAuth2AuthorizedClientService clientService;
-    private final ObjectMapper objectMapper;
-
+    private ObjectMapper objectMapper;
     @Value("${youtube.api.key}")
     private String youtubeApiKey;
 
-
     @Autowired
-    public YoutubeService(RestTemplate restTemplate, OAuth2AuthorizedClientService clientService, ObjectMapper objectMapper) {
+    public YoutubeService(RestTemplate restTemplate, ObjectMapper objectMapper) {
         this.restTemplate = restTemplate;
-        this.clientService = clientService;
         this.objectMapper = objectMapper;
     }
 
-    public HttpHeaders customHeaders(OAuth2AuthenticationToken token) {
-        OAuth2AuthorizedClient authorizedClient = null;
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-
-        try {
-            authorizedClient = this.clientService.loadAuthorizedClient(token.getAuthorizedClientRegistrationId(), token.getName());
-            headers.set("Authorization", "Bearer " + authorizedClient.getAccessToken().getTokenValue());
-        } catch (NullPointerException e) {
-            log.info("token is null");
-        }
-        return headers;
-    }
-
-    private void getToken(OAuth2AuthenticationToken tokenGoogle){
-        this.tokenGoogle = tokenGoogle;
+    private void getToken(HttpHeaders headers) {
+        this.googleHeaders = headers;
     }
 
     public ResponseEntity<String> getYoutubePlaylist(String url) {
-        return restTemplate.exchange(API_URL_YOUTUBE_PLAYLIST, HttpMethod.GET, new HttpEntity<>(customHeaders(tokenGoogle)), String.class);
+        return restTemplate.exchange(API_URL_YOUTUBE_PLAYLIST, HttpMethod.GET, new HttpEntity<>(googleHeaders), String.class);
     }
 
 
-    public String createSetYoutubeClipId(SpotifyPlaylistItems spotifyPlaylist,OAuth2AuthenticationToken tokenGoogle) {
+    public String createSetYoutubeClipId(SpotifyPlaylistItems spotifyPlaylist, HttpHeaders headers) {
 
-        getToken(tokenGoogle);
+        getToken(headers);
 
         Set<String> videoIdList = new HashSet<>();
 
         for (pl.lepa.spotifytoyt.model.spotify.Item name : spotifyPlaylist.getItems()) {
-            videoIdList.add(findYoutubeClip(name.getTrack().getName()));
+            videoIdList.add(findYoutubeClip(name.getTrack().getName()).getItems().get(0).getId().getVideoId());
             break; //because consume to much google resource
         }
         log.info(videoIdList.toString());
@@ -90,9 +72,12 @@ public class YoutubeService {
     }
 
 
-    public String findYoutubeClip(String name) {
-        ResponseEntity<Youtube> entity = restTemplate.exchange(API_URL_YOUTUBE_SEARCH + name+"&key="+youtubeApiKey, HttpMethod.GET, new HttpEntity<>(new HttpHeaders()), Youtube.class);
-        return Objects.requireNonNull(entity.getBody()).getItems().get(0).getId().getVideoId();
+    public Youtube findYoutubeClip(String name) {
+        String abc = API_URL_YOUTUBE_SEARCH + name + "&key=" + youtubeApiKey;
+        ResponseEntity<Youtube> entity = restTemplate.exchange(abc, HttpMethod.GET, new HttpEntity<>(new HttpHeaders()), Youtube.class);
+        ResponseEntity<Youtube> entity1 = restTemplate.getForEntity(abc, Youtube.class);
+        return entity.getBody();
+
     }
 
     public String createYoutubePlaylist(Set<String> videoIdList) {
@@ -102,15 +87,15 @@ public class YoutubeService {
                 new pl.lepa.spotifytoyt.model.youtube.create.playlist.Snippet
                         ("newPlaylist", "PL", "Playlist generate by SpotifyToYoutube"));
 
-        String jsonObject ="";
+        String jsonObject = "";
         try {
             jsonObject = objectMapper.writeValueAsString(newPlaylist);
 
         } catch (RuntimeException | JsonProcessingException e) {
             e.printStackTrace();
         }
-        HttpEntity<String> request = new HttpEntity<>(jsonObject, customHeaders(this.tokenGoogle));
-        ResponseEntity<Answer> entity=restTemplate.postForEntity(API_URL_YOUTUBE_PLAYLIST,request,Answer.class);
+        HttpEntity<String> request = new HttpEntity<>(jsonObject, googleHeaders);
+        ResponseEntity<Answer> entity = restTemplate.postForEntity(API_URL_YOUTUBE_PLAYLIST, request, Answer.class);
 
 
         return addToYoutubePlaylist(Objects.requireNonNull(entity.getBody()).getId(), videoIdList);
@@ -119,20 +104,20 @@ public class YoutubeService {
     public String addToYoutubePlaylist(String id, Set<String> videoIdList) {
 
         PlaylistItem newPlaylistItem = new PlaylistItem();
-        newPlaylistItem.setSnippet(new Snippet(id,new ResourceId("youtube#video", "")));
-        String jsonObject ="";
+        newPlaylistItem.setSnippet(new Snippet(id, new ResourceId("youtube#video", "")));
+        String jsonObject = "";
 
         for (String videoId : videoIdList) {
             newPlaylistItem.getSnippet().getResourceId().setVideoId(videoId);
             try {
-                jsonObject =objectMapper.writeValueAsString(newPlaylistItem);
+                jsonObject = objectMapper.writeValueAsString(newPlaylistItem);
             } catch (JsonProcessingException e) {
                 e.printStackTrace();
             }
-            HttpEntity<String> request = new HttpEntity<>(jsonObject, customHeaders(this.tokenGoogle));
-            restTemplate.postForEntity(API_URL_YOUTUBE_PLAYLIST_ITEMS,request,String.class);
+            HttpEntity<String> request = new HttpEntity<>(jsonObject, googleHeaders);
+            restTemplate.postForEntity(API_URL_YOUTUBE_PLAYLIST_ITEMS, request, String.class);
         }
-        return LINK_YOUTUBE_PLAYLIST+id;
+        return LINK_YOUTUBE_PLAYLIST + id;
     }
 
 
