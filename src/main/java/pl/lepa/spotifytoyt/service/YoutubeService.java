@@ -75,7 +75,6 @@ public class YoutubeService {
     public Youtube findYoutubeClip(String name) {
         String abc = API_URL_YOUTUBE_SEARCH + name + "&key=" + youtubeApiKey;
         ResponseEntity<Youtube> entity = restTemplate.exchange(abc, HttpMethod.GET, new HttpEntity<>(new HttpHeaders()), Youtube.class);
-        ResponseEntity<Youtube> entity1 = restTemplate.getForEntity(abc, Youtube.class);
         return entity.getBody();
 
     }
