@@ -64,7 +64,7 @@ class SpotifyServiceTest {
         ))
                 .thenReturn(new ResponseEntity<>(spotifyPlaylistItems, HttpStatus.OK));
 
-        SpotifyPlaylistItems testList = spotifyService.getSpotifyPlaylist(playListId, new HttpHeaders());
+        SpotifyPlaylistItems testList = spotifyService.getSpotifyPlaylist(playListId);
         Assertions.assertEquals(testList.getItems().get(0).getTrack(),track);
 
     }

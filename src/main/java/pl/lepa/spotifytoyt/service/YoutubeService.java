@@ -12,6 +12,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
+import pl.lepa.spotifytoyt.model.YoutubePlaylistClass;
 import pl.lepa.spotifytoyt.model.spotify.SpotifyPlaylistItems;
 import pl.lepa.spotifytoyt.model.youtube.Youtube;
 import pl.lepa.spotifytoyt.model.youtube.create.answer.Answer;
@@ -48,7 +49,7 @@ public class YoutubeService {
         this.objectMapper = objectMapper;
     }
 
-    private void getToken(HttpHeaders headers) {
+    public void getToken(HttpHeaders headers) {
         this.googleHeaders = headers;
     }
 
@@ -57,9 +58,9 @@ public class YoutubeService {
     }
 
 
-    public String createSetYoutubeClipId(SpotifyPlaylistItems spotifyPlaylist, HttpHeaders headers) {
+    public Set<String> createSetYoutubeClipId(SpotifyPlaylistItems spotifyPlaylist) {
 
-        getToken(headers);
+
 
         Set<String> videoIdList = new HashSet<>();
 
@@ -68,18 +69,18 @@ public class YoutubeService {
             break; //because consume to much google resource
         }
         log.info(videoIdList.toString());
-        return createYoutubePlaylist(videoIdList);
+        return videoIdList;
     }
 
-
     public Youtube findYoutubeClip(String name) {
-        String abc = API_URL_YOUTUBE_SEARCH + name + "&key=" + youtubeApiKey;
-        ResponseEntity<Youtube> entity = restTemplate.exchange(abc, HttpMethod.GET, new HttpEntity<>(new HttpHeaders()), Youtube.class);
+        String url = API_URL_YOUTUBE_SEARCH + name + "&key=" + youtubeApiKey;
+        ResponseEntity<Youtube> entity = restTemplate.exchange(url, HttpMethod.GET, new HttpEntity<>(new HttpHeaders()), Youtube.class);
         return entity.getBody();
 
     }
 
-    public String createYoutubePlaylist(Set<String> videoIdList) {
+
+    public YoutubePlaylistClass createYoutubePlaylist(Set<String> videoIdList) {
         Playlist newPlaylist = new Playlist();
         newPlaylist.setKind("youtube#playlist");
         newPlaylist.setSnippet(
@@ -97,10 +98,13 @@ public class YoutubeService {
         ResponseEntity<Answer> entity = restTemplate.postForEntity(API_URL_YOUTUBE_PLAYLIST, request, Answer.class);
 
 
-        return addToYoutubePlaylist(Objects.requireNonNull(entity.getBody()).getId(), videoIdList);
+        return new YoutubePlaylistClass(Objects.requireNonNull(entity.getBody()).getId(), videoIdList);
     }
 
-    public String addToYoutubePlaylist(String id, Set<String> videoIdList) {
+
+    public String addToYoutubePlaylist(YoutubePlaylistClass youtubePlaylist) {
+        String id=youtubePlaylist.getId();
+        Set<String> videoIdList=youtubePlaylist.getVideoIdList();
 
         PlaylistItem newPlaylistItem = new PlaylistItem();
         newPlaylistItem.setSnippet(new Snippet(id, new ResourceId("youtube#video", "")));

@@ -24,12 +24,11 @@ public class MusicService {
     private static final Pattern SPOTIFY_PATTERN = Pattern.compile(REGEX_START + "(.*?)" + REGEX_END);
     private static final String TOKEN_GOOGLE = "tokenGoogle";
     private static final String TOKEN_SPOTIFY = "tokenSpotify";
+    private final OAuth2AuthorizedClientService clientService;
     private YoutubeService youtubeService;
     private SpotifyService spotifyService;
     private OAuth2AuthenticationToken tokenSpotify;
     private OAuth2AuthenticationToken tokenGoogle;
-
-    private final OAuth2AuthorizedClientService clientService;
 
 
     @Autowired
@@ -70,13 +69,23 @@ public class MusicService {
         }
     }
 
-    public String convertSpotifyToYoutube(String url,Model model) {
-       getTokenFromSession(model);
-       return getMusicPlaylist(findPlaylistId(url));
+    public String convertSpotifyToYoutube(String url, Model model) {
+        getTokenFromSession(model);
+        return getMusicPlaylist(findPlaylistId(url));
     }
 
     public String getMusicPlaylist(String playlistId) {
-      return youtubeService.createSetYoutubeClipId(spotifyService.getSpotifyPlaylist(playlistId, customHeaders(this.tokenSpotify)),customHeaders(this.tokenGoogle));
+        youtubeService.getToken(customHeaders(this.tokenGoogle));
+        spotifyService.getToken(customHeaders(this.tokenSpotify));
+
+
+        return youtubeService.addToYoutubePlaylist(
+                youtubeService.createYoutubePlaylist(
+                        youtubeService.createSetYoutubeClipId(
+                                spotifyService.getSpotifyPlaylist(playlistId)
+                        )
+                )
+        );
 
     }
 }

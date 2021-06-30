@@ -13,11 +13,11 @@ import pl.lepa.spotifytoyt.model.spotify.SpotifyPlaylistItems;
 @Slf4j
 public class SpotifyService {
 
-
-
     static final String API_URL_SPOTIFY_PLAYLIST = "https://api.spotify.com/v1/playlists";
 
     private final RestTemplate restTemplate;
+    private HttpHeaders spotifyHeaders;
+
 
     @Autowired
     public SpotifyService(RestTemplate restTemplate ) {
@@ -25,14 +25,17 @@ public class SpotifyService {
     }
 
 
-    public SpotifyPlaylistItems getSpotifyPlaylist(String playlistId, HttpHeaders headers) {
+    public SpotifyPlaylistItems getSpotifyPlaylist(String playlistId) {
         String playlistID = "/" +playlistId;
         ResponseEntity<SpotifyPlaylistItems> template = restTemplate.exchange(
                 API_URL_SPOTIFY_PLAYLIST + playlistID + "/tracks",
                 HttpMethod.GET,
-                new HttpEntity<>(headers),
+                new HttpEntity<>(spotifyHeaders),
                 SpotifyPlaylistItems.class);
         return template.getBody();
     }
 
+    public void getToken(HttpHeaders headers) {
+        this.spotifyHeaders = headers;
+    }
 }
