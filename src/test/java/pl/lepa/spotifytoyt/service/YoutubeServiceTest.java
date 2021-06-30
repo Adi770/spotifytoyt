@@ -14,14 +14,21 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
 import pl.lepa.spotifytoyt.model.YoutubePlaylistClass;
+import pl.lepa.spotifytoyt.model.spotify.Item;
+import pl.lepa.spotifytoyt.model.spotify.SpotifyPlaylistItems;
+import pl.lepa.spotifytoyt.model.spotify.Track;
+import pl.lepa.spotifytoyt.model.youtube.VideoId;
 import pl.lepa.spotifytoyt.model.youtube.Youtube;
 import pl.lepa.spotifytoyt.model.youtube.create.answer.Answer;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -61,8 +68,39 @@ class YoutubeServiceTest {
 
     @Test
     void shouldCreateSetYoutubeClipId() {
+        SpotifyPlaylistItems spotifyPlaylistItems = new SpotifyPlaylistItems();
+        List<Item> itemList = new ArrayList<>();
+        Item item = new Item();
+        Track track = new Track();
+        track.setHref("test Href");
+        track.setName("test Name");
+        item.setTrack(track);
+        itemList.add(item);
+        spotifyPlaylistItems.setItems(itemList);
 
+        Youtube youtube = new Youtube();
 
+        youtube.setRegionCode("");
+        youtube.setKind("test Kind");
+        List<pl.lepa.spotifytoyt.model.youtube.Item> ytItemList= new ArrayList<>();
+        pl.lepa.spotifytoyt.model.youtube.Item ytItem=new pl.lepa.spotifytoyt.model.youtube.Item();
+
+        ytItem.setKind("test yt Kind");
+        ytItem.setId(new VideoId("test VideoI Kind","test VideoId id"));
+        ytItem.setEtag("test yt Etag");
+
+        ytItemList.add(ytItem);
+
+        youtube.setItems(ytItemList);
+
+        Mockito.when(mockRestTemplate.exchange(
+                ArgumentMatchers.anyString(),
+                ArgumentMatchers.eq(HttpMethod.GET),
+                ArgumentMatchers.any(),
+                ArgumentMatchers.<Class<Youtube>>any()
+        )).thenReturn(new ResponseEntity<>(youtube, HttpStatus.OK));
+
+        Set<String> current = mockYoutubeService.createSetYoutubeClipId(spotifyPlaylistItems);
     }
 
     @BeforeEach
@@ -81,8 +119,6 @@ class YoutubeServiceTest {
 
     @Test
     void shouldCreateYoutubePlaylist() {
-
-
         Set<String> videoIdList = new HashSet<>();
         videoIdList.add("Test Clip Id 1");
         videoIdList.add("Test Clip Id 2");

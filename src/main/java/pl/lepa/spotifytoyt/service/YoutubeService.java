@@ -59,9 +59,6 @@ public class YoutubeService {
 
 
     public Set<String> createSetYoutubeClipId(SpotifyPlaylistItems spotifyPlaylist) {
-
-
-
         Set<String> videoIdList = new HashSet<>();
 
         for (pl.lepa.spotifytoyt.model.spotify.Item name : spotifyPlaylist.getItems()) {
