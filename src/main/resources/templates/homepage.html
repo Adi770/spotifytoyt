@@ -23,7 +23,7 @@
 
 
     <div class="row justify-content-center">
-        <div class="col-sm-2 col-lg-2" th:if="${spotifyList != null}">
+        <div class="col-sm-2 col-lg-2" th:if="${spotifyList != null and !spotifyList.isEmpty() }">
             <a th:href="@{${spotifyList}}">Youtube Playlist</a>
         </div>
     </div>

@@ -1,6 +1,5 @@
 package pl.lepa.spotifytoyt.controller;
 
-
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
@@ -36,7 +35,6 @@ public class HomeController {
 
     @GetMapping("/home")
     public String getHomepage(Model model) {
-
         OAuth2AuthenticationToken tokenGoogle = (OAuth2AuthenticationToken) model.getAttribute(TOKEN_GOOGLE);
         OAuth2AuthenticationToken tokenSpotify = (OAuth2AuthenticationToken) model.getAttribute(TOKEN_SPOTIFY);
 
@@ -55,9 +53,12 @@ public class HomeController {
             log.warn("Spotify token is null");
             return "redirect:/oauth2/authorization/spotify";
         }
-        if (!model.containsAttribute(SPOTIFY_LIST)) {
+
+        if (model.getAttribute(SPOTIFY_LIST)=="") {
             return "redirect:/";
         }
+
+
         model.addAttribute(SPOTIFY_LIST, musicService.convertSpotifyToYoutube(Objects.requireNonNull(model.getAttribute(SPOTIFY_LIST)).toString(), model));
         return "homepage";
     }
@@ -88,23 +89,23 @@ public class HomeController {
     public String loginWithGoogleAccount(Model model, OAuth2AuthenticationToken token) {
         log.info("token from google");
         model.addAttribute(TOKEN_GOOGLE, token);
-        return "redirect:home";
+        return "redirect:/";
     }
 
     @GetMapping("/Spotify")
     public String loginWithSpotifyAccount(Model model, OAuth2AuthenticationToken token) {
         log.info("token from spotify");
         model.addAttribute(TOKEN_SPOTIFY, token);
-        return "redirect:home";
+        return "redirect:/";
 
     }
 
-    @GetMapping("/logout")
+    @GetMapping("/account/logout")
     public String logout(SessionStatus sessionStatus){
-
         sessionStatus.setComplete();
         return "redirect:/";
     }
+
 
 
 }
